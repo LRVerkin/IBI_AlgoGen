@@ -6,6 +6,7 @@ import rstr
 import random as rd
 import numpy as np
 import subprocess
+import os
 
 
 class Individu:
@@ -31,6 +32,21 @@ class Individu:
 	def mutate(self):
 		self.genotype[rd.randint(0,self.lengthPW-1)] = rstr.xeger(r'[0-9A-Z_]')
 
+	def crossover(self,partner):
+		'''
+		draw 2 indices between 0 and length i_min and i_max
+		child will have genotype of:
+		- self from 0 to i_min and i_max to length
+		- partner from i_min to i_max
+		'''
+
+		child = Individu()
+		indices = np.random.randint(0,self.lengthPW-1,size=2)
+		i_min,i_max = (min(indices),max(indices))
+		insertion = partner.genotype[i_min:min(i_max+1,self.lengthPW)]
+		childGeno = self.genotype[:max(0,i_min)]+insertion+self.genotype[min(self.lengthPW,i_max+1):]
+		child.setGenotype(childGeno)
+		return child
 
 	# def GenoToPheno(self):
 
@@ -50,10 +66,10 @@ class AlgoGen:
 	def show(self):
 		for ind in self.pop:
 			print(ind.genotype)
-			
+
 	def getFitnessPop(self):
 		if self.N <100:
-			bashCommand = "ibi_2018-2019_fitness_windows.exe 1"
+			bashCommand = (os.name=='nt')*"ibi_2018-2019_fitness_windows.exe 14"+(os.name!='nt')*"./ibi_2018-2019_fitness_linux 1"
 			for ind in self.pop:
 				bashCommand += ' '+''.join(ind.genotype)
 			process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -76,24 +92,19 @@ class AlgoGen:
 a= AlgoGen(10)
 a.show()
 a.rouletteSelection()
-#bashCommand = "ibi_2018-2019_fitness_windows.exe 1 "
-
 
 
 #TESTS
-'''indiv = Individu()
-indiv.setRandomGenotype()
-print(indiv.genotype)
-indiv.mutate()
-print(indiv.genotype)'''
+indiv1 = Individu()
+indiv1.setRandomGenotype()
+print("genotype indiv1 ",indiv1.genotype)
 
+indiv2 = Individu()
+indiv2.setRandomGenotype()
+indiv2.mutate()
+print("genotype indiv2 ",indiv2.genotype)
 
+child = Individu()
+child.setGenotype(indiv1.crossover(indiv2).genotype)
+print("child is ",child.genotype)
 
-
-
-
-		
-		
-
-#fitness = output.decode("utf-8").split('\n')[0].split('\t')[-1]	
-#print(fitness)
