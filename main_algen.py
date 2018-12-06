@@ -78,6 +78,7 @@ class AlgoGen:
 			for c in chars:
 				fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
 		print(fitnesses)
+		self.fitnesses = fitnesses
 		return fitnesses
 		
 	def rouletteSelection(self):
@@ -92,8 +93,19 @@ class AlgoGen:
 		rank_fitnesses = rankdata(fitnesses)
 		probs = [f / sum(rank_fitnesses) for f in rank_fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
-		print(p1.genotype, p2.genotype)
 		return p1, p2
+		
+	def evolution(self, T):
+		t = 0
+		mean_fitnesses = []
+		max_fitnesses = []
+		while t < T:
+			self.reproduction()
+			mean_fitness.append(np.mean(self.fitnesses))
+			max_fitness.append(max(self.fitnesses))
+		plt.figure()
+		plt.plot(range(T), mean_fitnesses)
+		plt.plot(range(T), max_fitnesses)
 
 
 a= AlgoGen(10)
