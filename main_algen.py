@@ -35,18 +35,28 @@ class Individu:
 	def crossover(self,partner):
 		'''
 		draw 2 indices between 0 and length i_min and i_max
-		child will have genotype of:
+		self will have genotype of:
 		- self from 0 to i_min and i_max to length
 		- partner from i_min to i_max
+		partner will have genotype of :
+		- partner from 0 to i_min and i_max to length
+		- self from i_min to i_max
+		Modifies genotypes of self and partner
 		'''
-
-		child = Individu()
+		print(self.genotype)
+		print(partner.genotype)
+		print("becomes")
 		indices = np.random.randint(0,self.lengthPW-1,size=2)
+		print(indices)
 		i_min,i_max = (min(indices),max(indices))
-		insertion = partner.genotype[i_min:min(i_max+1,self.lengthPW)]
-		childGeno = self.genotype[:max(0,i_min)]+insertion+self.genotype[min(self.lengthPW,i_max+1):]
-		child.setGenotype(childGeno)
-		return child
+		insertion_self = partner.genotype[i_min:min(i_max+1,self.lengthPW)]
+		insertion_partner = self.genotype[i_min:min(i_max+1,self.lengthPW)]
+		futureSelf = self.genotype[:max(0,i_min)]+insertion_self+self.genotype[min(self.lengthPW,i_max+1):]
+		futurePartner = partner.genotype[:max(0,i_min)]+insertion_partner+partner.genotype[min(self.lengthPW,i_max+1):]
+		self.setGenotype(futureSelf)
+		partner.setGenotype(futurePartner)
+		print(self.genotype)
+		print(partner.genotype)
 
 	# def GenoToPheno(self):
 
@@ -65,7 +75,7 @@ class AlgoGen:
 		
 	def show(self):
 		for ind in self.pop:
-			print(ind.genotype)
+			print("genome is ",ind.genotype)
 
 	def getFitnessPop(self):
 		if self.N <100:
@@ -79,32 +89,43 @@ class AlgoGen:
 			fitnesses = []
 			for c in chars:
 				fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
-		print(fitnesses)
+		print("fitnesses are ",fitnesses)
 		return fitnesses
 		
 	def rouletteSelection(self):
+		'''returns two individuals that will reproduce
+		'''
 		fitnesses = self.getFitnessPop()
 		probs = [f / sum(fitnesses) for f in fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
-		print(p1.genotype, p2.genotype)
-		
+		print("genomes selected for repro ",p1.genotype, p2.genotype)
+		return p1,p2
 
-a= AlgoGen(10)
-a.show()
-a.rouletteSelection()
+	def reproduction(self):
+		'''
+		add
+		'''
+		
 
 
 #TESTS
-indiv1 = Individu()
-indiv1.setRandomGenotype()
-print("genotype indiv1 ",indiv1.genotype)
 
-indiv2 = Individu()
-indiv2.setRandomGenotype()
-indiv2.mutate()
-print("genotype indiv2 ",indiv2.genotype)
 
-child = Individu()
-child.setGenotype(indiv1.crossover(indiv2).genotype)
-print("child is ",child.genotype)
+## test mutation
+# indiv2 = Individu()
+# indiv2.setRandomGenotype()
+# indiv2.mutate()
+# print("genotype indiv2 ",indiv2.genotype)
 
+## test crossover function
+# indiv1 = Individu()
+# indiv1.setRandomGenotype()
+# indiv2 = Individu()
+# indiv2.setRandomGenotype()
+
+# indiv1.crossover(indiv2)
+
+
+# a= AlgoGen(10)
+# a.show()
+# a.rouletteSelection()
