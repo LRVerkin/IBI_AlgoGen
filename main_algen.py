@@ -3,6 +3,7 @@
 
 import re
 import rstr
+import random as rd
 import numpy as np
 import subprocess
 
@@ -14,7 +15,7 @@ class Individu:
 
 	'''
 	def __init__(self):
-		self.genotype = ""
+		self.genotype = []
 		self.lengthPW = 12
 		self.possibilities = []
 
@@ -23,12 +24,16 @@ class Individu:
 		self.genotype = genotype
 
 	def setRandomGenotype(self):
-		self.genotype = rstr.xeger(r'[0-9A-Z_]{12}')
+		self.genotype = list(rstr.xeger(r'[0-9A-Z_]{12}'))
 
 
 
+	def mutate(self):
+		self.genotype[rd.randint(0,self.lengthPW-1)] = rstr.xeger(r'[0-9A-Z_]')
+
+
+	def 
 	# def GenoToPheno(self):
-
 
 	# def PhenoToGeno(self):
 
@@ -47,6 +52,7 @@ class AlgoGen:
 		for ind in self.pop:
 			print(ind.genotype)
 			
+<<<<<<< HEAD
 	
 	def getFitnessPop(self):
 		if self.N <100:
@@ -73,6 +79,22 @@ print(a.getFitnessPop())
 #bashCommand = "ibi_2018-2019_fitness_windows.exe 1 "
 
 
+
+#TESTS
+indiv = Individu()
+indiv.setRandomGenotype()
+print(indiv.genotype)
+indiv.mutate()
+print(indiv.genotype)
+
+a= AlgoGen(10)
+a.show()
+
+
+
+
+		
+		
 
 #fitness = output.decode("utf-8").split('\n')[0].split('\t')[-1]	
 #print(fitness)
