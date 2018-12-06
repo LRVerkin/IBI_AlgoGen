@@ -5,6 +5,8 @@ import re
 import rstr
 import random as rd
 import numpy as np
+import subprocess
+
 
 class Individu:
 	'''
@@ -28,7 +30,6 @@ class Individu:
 
 	def mutate(self):
 		self.genotype[rd.randint(0,self.lengthPW-1)] = rstr.xeger(r'[0-9A-Z_]')
-
 
 	def crossover(self,partner):
 		'''
@@ -65,6 +66,23 @@ class AlgoGen:
 		for ind in self.pop:
 			print(ind.genotype)
 
+	def getFitnessPop(self):
+		if self.N <100:
+			bashCommand = "ibi_2018-2019_fitness_windows.exe 1"
+			for ind in self.pop:
+				bashCommand += ' '+''.join(ind.genotype)
+			
+			process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+			output, error = process.communicate()
+			
+			chars = output.decode("utf-8").split('\n')
+			chars = chars[0:len(chars)-1]
+			fitnesses = []
+			for c in chars:
+				fitnesses.append(c.split('\t')[-1].split('\r')[0])
+		return fitnesses
+		
+
 
 #TESTS
 indiv1 = Individu()
@@ -80,9 +98,14 @@ child = Individu()
 child.setGenotype(indiv1.crossover(indiv2).genotype)
 print("child is ",child.genotype)
 
+			
+		
 
 a= AlgoGen(10)
-#a.show()
+a.show()
+print(a.getFitnessPop())
+
+#bashCommand = "ibi_2018-2019_fitness_windows.exe 1 "
 
 
 
@@ -90,3 +113,5 @@ a= AlgoGen(10)
 		
 		
 
+#fitness = output.decode("utf-8").split('\n')[0].split('\t')[-1]	
+#print(fitness)
