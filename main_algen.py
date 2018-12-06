@@ -79,11 +79,11 @@ class AlgoGen:
 
 	def show(self):
 		for ind in self.pop:
-			print("genome is ",ind.genotype)
+			print("genome is ",''.join(ind.genotype))
 
 
 	def getFitnessPop(self):
-		if self.N <100:
+		if self.N <=100:
 			bashCommand = (os.name=='nt')*"ibi_2018-2019_fitness_windows.exe 14"+(os.name!='nt')*"./ibi_2018-2019_fitness_linux 1"
 			for ind in self.pop:
 				bashCommand += ' '+''.join(ind.genotype)
@@ -94,6 +94,31 @@ class AlgoGen:
 			fitnesses = []
 			for c in chars:
 				fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
+		else:
+			fitnessesAll = []
+			nbBash = int(self.N /100)
+			print('nbBash à faire : ', nbBash)
+			for b in range(nbBash+1):
+				maxi = (b+1)*100
+				if self.N-1 < maxi :
+					maxi = self.N-1
+				print(' De ', b*100+1, ' à ', (b+1)*100)
+				
+				bashCommand = (os.name=='nt')*"ibi_2018-2019_fitness_windows.exe 14"+(os.name!='nt')*"./ibi_2018-2019_fitness_linux 1"
+				for ind in self.pop[b*100:(b+1)*100]:
+					bashCommand += ' '+''.join(ind.genotype)
+				process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+				output, error = process.communicate()
+				chars = output.decode("utf-8").split('\n')
+				chars = chars[0:len(chars)-1]
+				fitnesses = []
+				for c in chars:
+					fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
+				fitnessesAll += fitnesses
+			print(fitnessesAll)
+			return(fitnessesAll)
+			
+					
 
 		self.fitnesses = fitnesses
 		return fitnesses
@@ -153,6 +178,7 @@ class AlgoGen:
 		mean_fitnesses = []
 		max_fitnesses = []
 		while t < T:
+			print('Generation ',t)
 			self.reproduction()
 			mean_fitnesses.append(np.mean(self.fitnesses))
 			max_fitnesses.append(max(self.fitnesses))
@@ -181,13 +207,16 @@ p_co = 0.5
 # indiv1.crossover(indiv2)
 
 
-a= AlgoGen(10,p_co,p_mut)
+a= AlgoGen(308,p_co,p_mut)
+a.show()
+f = a.getFitnessPop()
+print(len(a.pop), len(f))
 #a.show()
 # a.rouletteSelection()
 #a.reproduction()
 #print("new gen is")
 #a.show()
-a.evolution(1000)
+#a.evolution(1000)
 
 
 
