@@ -13,10 +13,11 @@ class Individu:
 	de 12 caractères dans 0-9A-Z_
 
 	'''
-	def __init__(self):
+	def __init__(self,proba_mut):
 		self.genotype = []
 		self.lengthPW = 12
 		self.possibilities = []
+		self.proba_mut = proba_mut
 
 
 	def setGenotype(self,genotype):
@@ -27,8 +28,12 @@ class Individu:
 
 
 
+	##### CHANGE INDIVIDUAL #######
+
 	def mutate(self):
-		self.genotype[rd.randint(0,self.lengthPW-1)] = rstr.xeger(r'[0-9A-Z_]')
+		for i in range(self.lengthPW):
+			if rd.random()<self.proba_mut:
+				self.genotype[i] = rstr.xeger(r'[0-9A-Z_]')
 
 	def crossover(self,partner):
 		'''
@@ -41,11 +46,7 @@ class Individu:
 		- self from i_min to i_max
 		Modifies genotypes of self and partner
 		'''
-		print(self.genotype)
-		print(partner.genotype)
-		print("becomes")
 		indices = np.random.randint(0,self.lengthPW-1,size=2)
-		print(indices)
 		i_min,i_max = (min(indices),max(indices))
 		insertion_self = partner.genotype[i_min:min(i_max+1,self.lengthPW)]
 		insertion_partner = self.genotype[i_min:min(i_max+1,self.lengthPW)]
@@ -53,8 +54,9 @@ class Individu:
 		futurePartner = partner.genotype[:max(0,i_min)]+insertion_partner+partner.genotype[min(self.lengthPW,i_max+1):]
 		self.setGenotype(futureSelf)
 		partner.setGenotype(futurePartner)
-		print(self.genotype)
-		print(partner.genotype)
+
+
+	#######################
 
 	# def GenoToPheno(self):
 
@@ -64,16 +66,20 @@ class Individu:
 
 class AlgoGen:
 	
-	def __init__(self, Nind):
+	def __init__(self, Nind,proba_crossover,proba_mut):
 		
 		self.N = Nind
-		self.pop = np.array([Individu() for n in range(self.N)])
+		self.proba_crossover = proba_crossover
+		self.proba_mut = proba_mut
+		self.pop = np.array([Individu(proba_mut) for n in range(self.N)])
 		for individu in self.pop:
 			individu.setRandomGenotype()
 		
+
 	def show(self):
 		for ind in self.pop:
 			print("genome is ",ind.genotype)
+
 
 	def getFitnessPop(self):
 		if self.N <100:
@@ -87,53 +93,86 @@ class AlgoGen:
 			fitnesses = []
 			for c in chars:
 				fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
-		print("fitnesses are ",fitnesses)
+		#print("fitnesses are ",fitnesses)
 		return fitnesses
 		
+
+
+
+	#### DIFFERENT SELECTIONS ####
+
 	def rouletteSelection(self):
 		'''returns two individuals that will reproduce
 		'''
 		fitnesses = self.getFitnessPop()
 		probs = [f / sum(fitnesses) for f in fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
-		print("genomes selected for repro ",p1.genotype, p2.genotype)
+		#print("genomes selected for repro ",p1.genotype, p2.genotype)
 		return p1,p2
 
-	def reproduction(self):
-		'''
-		add
-		'''
-		
-		
 	def rankSelection(self):
 		fitnesses = self.getFitnessPop()
 		rank_fitnesses = rankdata(fitnesses)
 		probs = [f / sum(rank_fitnesses) for f in rank_fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
-		print(p1.genotype, p2.genotype)
+		#print("genomes selected for repro ",p1.genotype, p2.genotype)
 		return p1, p2
 
+	#################################
 
+
+	def reproduction(self):
+		'''
+		change population to a new generation
+		'''
+		nb_children = 0
+		new_gen = []
+
+		while (nb_children<len(self.pop)):
+
+			parent1,parent2 = self.rouletteSelection()
+			child1 = Individu(self.proba_mut)
+			child1.setGenotype(parent1.genotype)
+			child2 = Individu(self.proba_mut)
+			child2.setGenotype(parent2.genotype)
+
+			if (rd.random()<self.proba_crossover):
+				child1.crossover(child2)
+
+			child1.mutate()
+			child2.mutate()
+
+			new_gen.append(child1)
+			new_gen.append(child2)
+
+			nb_children += 2
+
+
+		self.pop = new_gen
 
 
 #TESTS
-
+p_mut = 0.1
+p_co = 0.05
+# indiv1 = Individu(p_mut)
+# indiv1.setRandomGenotype()
+# indiv2 = Individu(p_mut)
+# indiv2.setRandomGenotype()
 
 ## test mutation
-# indiv2 = Individu()
-# indiv2.setRandomGenotype()
+# print("genotype indiv2 ",indiv2.genotype)
 # indiv2.mutate()
 # print("genotype indiv2 ",indiv2.genotype)
 
 ## test crossover function
-# indiv1 = Individu()
-# indiv1.setRandomGenotype()
-# indiv2 = Individu()
-# indiv2.setRandomGenotype()
-
 # indiv1.crossover(indiv2)
 
 
-# a= AlgoGen(10)
-# a.show()
+a= AlgoGen(10,p_co,p_mut)
+a.show()
 # a.rouletteSelection()
+a.reproduction()
+print("new gen is")
+a.show()
+
+
