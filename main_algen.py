@@ -4,6 +4,8 @@
 import re
 import rstr
 import numpy as np
+import subprocess
+
 
 class Individu:
 	'''
@@ -44,10 +46,33 @@ class AlgoGen:
 	def show(self):
 		for ind in self.pop:
 			print(ind.genotype)
+			
+	
+	def getFitnessPop(self):
+		if self.N <100:
+			bashCommand = "ibi_2018-2019_fitness_windows.exe 1"
+			for ind in self.pop:
+				bashCommand += ' '+ind.genotype
+			
+			process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+			output, error = process.communicate()
+			
+			chars = output.decode("utf-8").split('\n')
+			chars = chars[0:len(chars)-1]
+			fitnesses = []
+			for c in chars:
+				fitnesses.append(c.split('\t')[-1].split('\r')[0])
+		return fitnesses
+		
+		
 
 a= AlgoGen(10)
 a.show()
-		
-		
-	
+print(a.getFitnessPop())
 
+#bashCommand = "ibi_2018-2019_fitness_windows.exe 1 "
+
+
+
+#fitness = output.decode("utf-8").split('\n')[0].split('\t')[-1]	
+#print(fitness)
