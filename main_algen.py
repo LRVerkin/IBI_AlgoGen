@@ -30,7 +30,22 @@ class Individu:
 		self.genotype[rd.randint(0,self.lengthPW-1)] = rstr.xeger(r'[0-9A-Z_]')
 
 
-	def 
+	def crossover(self,partner):
+		'''
+		draw 2 indices between 0 and length i_min and i_max
+		child will have genotype of:
+		- self from 0 to i_min and i_max to length
+		- partner from i_min to i_max
+		'''
+
+		child = Individu()
+		indices = np.random.randint(0,self.lengthPW-1,size=2)
+		i_min,i_max = (min(indices),max(indices))
+		insertion = partner.genotype[i_min:min(i_max+1,self.lengthPW)]
+		childGeno = self.genotype[:max(0,i_min)]+insertion+self.genotype[min(self.lengthPW,i_max+1):]
+		child.setGenotype(childGeno)
+		return child
+
 	# def GenoToPheno(self):
 
 	# def PhenoToGeno(self):
@@ -49,17 +64,25 @@ class AlgoGen:
 	def show(self):
 		for ind in self.pop:
 			print(ind.genotype)
-			
+
 
 #TESTS
-indiv = Individu()
-indiv.setRandomGenotype()
-print(indiv.genotype)
-indiv.mutate()
-print(indiv.genotype)
+indiv1 = Individu()
+indiv1.setRandomGenotype()
+print("genotype indiv1 ",indiv1.genotype)
+
+indiv2 = Individu()
+indiv2.setRandomGenotype()
+indiv2.mutate()
+print("genotype indiv2 ",indiv2.genotype)
+
+child = Individu()
+child.setGenotype(indiv1.crossover(indiv2).genotype)
+print("child is ",child.genotype)
+
 
 a= AlgoGen(10)
-a.show()
+#a.show()
 
 
 
