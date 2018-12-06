@@ -212,6 +212,7 @@ a.show()
 f = a.getFitnessPop()
 print(len(a.pop), len(f))
 #a.show()
+
 # a.rouletteSelection()
 #a.reproduction()
 #print("new gen is")
