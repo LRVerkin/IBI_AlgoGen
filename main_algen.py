@@ -1,12 +1,10 @@
-
-
-
 import re
 import rstr
 import random as rd
 import numpy as np
 import subprocess
 import os
+from scipy.stats import rankdata
 
 
 class Individu:
@@ -106,6 +104,16 @@ class AlgoGen:
 		add
 		'''
 		
+		
+	def rankSelection(self):
+		fitnesses = self.getFitnessPop()
+		rank_fitnesses = rankdata(fitnesses)
+		probs = [f / sum(rank_fitnesses) for f in rank_fitnesses]
+		p1, p2 = np.random.choice(self.pop, 2, p = probs)
+		print(p1.genotype, p2.genotype)
+		return p1, p2
+
+
 
 
 #TESTS
