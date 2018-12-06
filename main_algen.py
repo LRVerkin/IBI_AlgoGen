@@ -32,7 +32,6 @@ class Individu:
 		self.genotype[rd.randint(0,self.lengthPW-1)] = rstr.xeger(r'[0-9A-Z_]')
 
 
-	def 
 	# def GenoToPheno(self):
 
 	# def PhenoToGeno(self):
@@ -52,13 +51,12 @@ class AlgoGen:
 		for ind in self.pop:
 			print(ind.genotype)
 			
-<<<<<<< HEAD
 	
 	def getFitnessPop(self):
 		if self.N <100:
 			bashCommand = "ibi_2018-2019_fitness_windows.exe 1"
 			for ind in self.pop:
-				bashCommand += ' '+ind.genotype
+				bashCommand += ' '+''.join(ind.genotype)
 			
 			process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
 			output, error = process.communicate()
@@ -81,14 +79,13 @@ print(a.getFitnessPop())
 
 
 #TESTS
-indiv = Individu()
+'''indiv = Individu()
 indiv.setRandomGenotype()
 print(indiv.genotype)
 indiv.mutate()
-print(indiv.genotype)
+print(indiv.genotype)'''
 
-a= AlgoGen(10)
-a.show()
+
 
 
 
