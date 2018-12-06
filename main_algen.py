@@ -168,7 +168,7 @@ p_co = 0.05
 # indiv1.crossover(indiv2)
 
 
-a= AlgoGen(10,p_co,p_mut)
+a= AlgoGen(50,p_co,p_mut)
 a.show()
 # a.rouletteSelection()
 a.reproduction()
