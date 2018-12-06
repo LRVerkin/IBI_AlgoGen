@@ -51,29 +51,31 @@ class AlgoGen:
 		for ind in self.pop:
 			print(ind.genotype)
 			
-	
 	def getFitnessPop(self):
 		if self.N <100:
 			bashCommand = "ibi_2018-2019_fitness_windows.exe 1"
 			for ind in self.pop:
 				bashCommand += ' '+''.join(ind.genotype)
-			
 			process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
 			output, error = process.communicate()
-			
 			chars = output.decode("utf-8").split('\n')
 			chars = chars[0:len(chars)-1]
 			fitnesses = []
 			for c in chars:
-				fitnesses.append(c.split('\t')[-1].split('\r')[0])
+				fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
+		print(fitnesses)
 		return fitnesses
 		
+	def rouletteSelection(self):
+		fitnesses = self.getFitnessPop()
+		probs = [f / sum(fitnesses) for f in fitnesses]
+		p1, p2 = np.random.choice(self.pop, 2, p = probs)
+		print(p1.genotype, p2.genotype)
 		
 
 a= AlgoGen(10)
 a.show()
-print(a.getFitnessPop())
-
+a.rouletteSelection()
 #bashCommand = "ibi_2018-2019_fitness_windows.exe 1 "
 
 
