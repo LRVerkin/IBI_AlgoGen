@@ -4,6 +4,7 @@ import random as rd
 import numpy as np
 import subprocess
 import os
+import matplotlib.pyplot as plt
 from scipy.stats import rankdata
 
 
@@ -93,7 +94,8 @@ class AlgoGen:
 			fitnesses = []
 			for c in chars:
 				fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
-		#print("fitnesses are ",fitnesses)
+
+		self.fitnesses = fitnesses
 		return fitnesses
 		
 
@@ -107,7 +109,6 @@ class AlgoGen:
 		fitnesses = self.getFitnessPop()
 		probs = [f / sum(fitnesses) for f in fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
-		#print("genomes selected for repro ",p1.genotype, p2.genotype)
 		return p1,p2
 
 	def rankSelection(self):
@@ -115,7 +116,6 @@ class AlgoGen:
 		rank_fitnesses = rankdata(fitnesses)
 		probs = [f / sum(rank_fitnesses) for f in rank_fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
-		#print("genomes selected for repro ",p1.genotype, p2.genotype)
 		return p1, p2
 
 	#################################
@@ -141,19 +141,32 @@ class AlgoGen:
 
 			child1.mutate()
 			child2.mutate()
-
 			new_gen.append(child1)
 			new_gen.append(child2)
-
 			nb_children += 2
 
 
 		self.pop = new_gen
+		
+	def evolution(self, T):
+		t = 0
+		mean_fitnesses = []
+		max_fitnesses = []
+		while t < T:
+			self.reproduction()
+			mean_fitnesses.append(np.mean(self.fitnesses))
+			max_fitnesses.append(max(self.fitnesses))
+			t+= 1
+		plt.figure()
+		plt.plot(range(T), mean_fitnesses)
+		plt.plot(range(T), max_fitnesses)
+		plt.show()
+
 
 
 #TESTS
 p_mut = 0.1
-p_co = 0.05
+p_co = 0.5
 # indiv1 = Individu(p_mut)
 # indiv1.setRandomGenotype()
 # indiv2 = Individu(p_mut)
@@ -171,8 +184,10 @@ p_co = 0.05
 a= AlgoGen(50,p_co,p_mut)
 a.show()
 # a.rouletteSelection()
-a.reproduction()
-print("new gen is")
-a.show()
+#a.reproduction()
+#print("new gen is")
+#a.show()
+a.evolution(1000)
+
 
 
