@@ -3,6 +3,8 @@
 
 import re
 import rstr
+import random as rd
+import numpy
 
 class Individu:
 	'''
@@ -11,7 +13,7 @@ class Individu:
 
 	'''
 	def __init__(self):
-		self.genotype = ""
+		self.genotype = []
 		self.lengthPW = 12
 		self.possibilities = []
 
@@ -20,17 +22,27 @@ class Individu:
 		self.genotype = genotype
 
 	def setRandomGenotype(self):
-		self.genotype = rstr.xeger(r'[0-9A-Z_]{12}')
+		self.genotype = list(rstr.xeger(r'[0-9A-Z_]{12}'))
 
 
 
+	def mutate(self):
+		self.genotype[rd.randint(0,self.lengthPW-1)] = rstr.xeger(r'[0-9A-Z_]')
+
+
+	def 
 	# def GenoToPheno(self):
-
 
 	# def PhenoToGeno(self):
 
 
 
+#TESTS
+indiv = Individu()
+indiv.setRandomGenotype()
+print(indiv.genotype)
+indiv.mutate()
+print(indiv.genotype)
 
 
 
