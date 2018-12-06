@@ -4,6 +4,7 @@ import random as rd
 import numpy as np
 import subprocess
 import os
+import matplotlib.pyplot as plt
 from scipy.stats import rankdata
 
 
@@ -13,10 +14,11 @@ class Individu:
 	de 12 caractères dans 0-9A-Z_
 
 	'''
-	def __init__(self):
+	def __init__(self,proba_mut):
 		self.genotype = []
 		self.lengthPW = 12
 		self.possibilities = []
+		self.proba_mut = proba_mut
 
 
 	def setGenotype(self,genotype):
@@ -27,24 +29,35 @@ class Individu:
 
 
 
+	##### CHANGE INDIVIDUAL #######
+
 	def mutate(self):
-		self.genotype[rd.randint(0,self.lengthPW-1)] = rstr.xeger(r'[0-9A-Z_]')
+		for i in range(self.lengthPW):
+			if rd.random()<self.proba_mut:
+				self.genotype[i] = rstr.xeger(r'[0-9A-Z_]')
 
 	def crossover(self,partner):
 		'''
 		draw 2 indices between 0 and length i_min and i_max
-		child will have genotype of:
+		self will have genotype of:
 		- self from 0 to i_min and i_max to length
 		- partner from i_min to i_max
+		partner will have genotype of :
+		- partner from 0 to i_min and i_max to length
+		- self from i_min to i_max
+		Modifies genotypes of self and partner
 		'''
-
-		child = Individu()
 		indices = np.random.randint(0,self.lengthPW-1,size=2)
 		i_min,i_max = (min(indices),max(indices))
-		insertion = partner.genotype[i_min:min(i_max+1,self.lengthPW)]
-		childGeno = self.genotype[:max(0,i_min)]+insertion+self.genotype[min(self.lengthPW,i_max+1):]
-		child.setGenotype(childGeno)
-		return child
+		insertion_self = partner.genotype[i_min:min(i_max+1,self.lengthPW)]
+		insertion_partner = self.genotype[i_min:min(i_max+1,self.lengthPW)]
+		futureSelf = self.genotype[:max(0,i_min)]+insertion_self+self.genotype[min(self.lengthPW,i_max+1):]
+		futurePartner = partner.genotype[:max(0,i_min)]+insertion_partner+partner.genotype[min(self.lengthPW,i_max+1):]
+		self.setGenotype(futureSelf)
+		partner.setGenotype(futurePartner)
+
+
+	#######################
 
 	# def GenoToPheno(self):
 
@@ -54,16 +67,20 @@ class Individu:
 
 class AlgoGen:
 	
-	def __init__(self, Nind):
+	def __init__(self, Nind,proba_crossover,proba_mut):
 		
 		self.N = Nind
-		self.pop = np.array([Individu() for n in range(self.N)])
+		self.proba_crossover = proba_crossover
+		self.proba_mut = proba_mut
+		self.pop = np.array([Individu(proba_mut) for n in range(self.N)])
 		for individu in self.pop:
 			individu.setRandomGenotype()
 		
+
 	def show(self):
 		for ind in self.pop:
-			print(ind.genotype)
+			print("genome is ",ind.genotype)
+
 
 	def getFitnessPop(self):
 		if self.N <100:
@@ -77,23 +94,59 @@ class AlgoGen:
 			fitnesses = []
 			for c in chars:
 				fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
-		print(fitnesses)
+
 		self.fitnesses = fitnesses
 		return fitnesses
 		
+
+
+
+	#### DIFFERENT SELECTIONS ####
+
 	def rouletteSelection(self):
+		'''returns two individuals that will reproduce
+		'''
 		fitnesses = self.getFitnessPop()
 		probs = [f / sum(fitnesses) for f in fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
-		print(p1.genotype, p2.genotype)
-		
-		
+		return p1,p2
+
 	def rankSelection(self):
 		fitnesses = self.getFitnessPop()
 		rank_fitnesses = rankdata(fitnesses)
 		probs = [f / sum(rank_fitnesses) for f in rank_fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
 		return p1, p2
+
+	#################################
+
+
+	def reproduction(self):
+		'''
+		change population to a new generation
+		'''
+		nb_children = 0
+		new_gen = []
+
+		while (nb_children<len(self.pop)):
+
+			parent1,parent2 = self.rouletteSelection()
+			child1 = Individu(self.proba_mut)
+			child1.setGenotype(parent1.genotype)
+			child2 = Individu(self.proba_mut)
+			child2.setGenotype(parent2.genotype)
+
+			if (rd.random()<self.proba_crossover):
+				child1.crossover(child2)
+
+			child1.mutate()
+			child2.mutate()
+			new_gen.append(child1)
+			new_gen.append(child2)
+			nb_children += 2
+
+
+		self.pop = new_gen
 		
 	def evolution(self, T):
 		t = 0
@@ -101,29 +154,40 @@ class AlgoGen:
 		max_fitnesses = []
 		while t < T:
 			self.reproduction()
-			mean_fitness.append(np.mean(self.fitnesses))
-			max_fitness.append(max(self.fitnesses))
+			mean_fitnesses.append(np.mean(self.fitnesses))
+			max_fitnesses.append(max(self.fitnesses))
+			t+= 1
 		plt.figure()
 		plt.plot(range(T), mean_fitnesses)
 		plt.plot(range(T), max_fitnesses)
+		plt.show()
 
-
-a= AlgoGen(10)
-a.show()
-a.rankSelection()
 
 
 #TESTS
-indiv1 = Individu()
-indiv1.setRandomGenotype()
-print("genotype indiv1 ",indiv1.genotype)
+p_mut = 0.1
+p_co = 0.5
+# indiv1 = Individu(p_mut)
+# indiv1.setRandomGenotype()
+# indiv2 = Individu(p_mut)
+# indiv2.setRandomGenotype()
 
-indiv2 = Individu()
-indiv2.setRandomGenotype()
-indiv2.mutate()
-print("genotype indiv2 ",indiv2.genotype)
+## test mutation
+# print("genotype indiv2 ",indiv2.genotype)
+# indiv2.mutate()
+# print("genotype indiv2 ",indiv2.genotype)
 
-child = Individu()
-child.setGenotype(indiv1.crossover(indiv2).genotype)
-print("child is ",child.genotype)
+## test crossover function
+# indiv1.crossover(indiv2)
+
+
+a= AlgoGen(10,p_co,p_mut)
+#a.show()
+# a.rouletteSelection()
+#a.reproduction()
+#print("new gen is")
+#a.show()
+a.evolution(1000)
+
+
 
