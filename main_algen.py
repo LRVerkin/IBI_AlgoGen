@@ -6,6 +6,7 @@ import rstr
 import random as rd
 import numpy as np
 import subprocess
+import os
 
 
 class Individu:
@@ -68,7 +69,7 @@ class AlgoGen:
 
 	def getFitnessPop(self):
 		if self.N <100:
-			bashCommand = "ibi_2018-2019_fitness_windows.exe 1"
+			bashCommand = (os.name=='nt')*"ibi_2018-2019_fitness_windows.exe 1"+(os.name!='nt')*"./ibi_2018-2019_fitness_linux 1"
 			for ind in self.pop:
 				bashCommand += ' '+''.join(ind.genotype)
 			
