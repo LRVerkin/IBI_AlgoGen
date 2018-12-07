@@ -84,7 +84,6 @@ class Individu:
 		self.genotype = []
 		for elem in self.phenotype:
 			self.genotype.append(self.possibilities.index(elem))
-		print(self.phenotype)
 
 
 class AlgoGen:
