@@ -6,6 +6,7 @@ import subprocess
 import os
 import matplotlib.pyplot as plt
 from scipy.stats import rankdata
+import string
 
 
 class Individu:
@@ -16,25 +17,38 @@ class Individu:
 	'''
 	def __init__(self,proba_mut):
 		self.genotype = []
+		self.phenotype = []
 		self.lengthPW = 12
-		self.possibilities = []
+		self.possibilities = list(string.ascii_uppercase)+[str(i) for i in range(10)]+['_']
 		self.proba_mut = proba_mut
 
 
+
+	def setPhenotype(self,phenotype):
+		self.phenotype = phenotype
+		self.PhenoToGeno()
+
+
+	def setRandomPhenotype(self):
+		self.phenotype = list(rstr.xeger(r'[0-9A-Z_]{12}'))
+		self.PhenoToGeno()
+
 	def setGenotype(self,genotype):
 		self.genotype = genotype
-
-	def setRandomGenotype(self):
-		self.genotype = list(rstr.xeger(r'[0-9A-Z_]{12}'))
+		self.GenoToPheno()
 
 
 
-	##### CHANGE INDIVIDUAL #######
+	##### CHANGE GENOTYPE OF INDIVIDUAL #######
 
 	def mutate(self):
-		for i in range(self.lengthPW):
-			if rd.random()<self.proba_mut:
-				self.genotype[i] = rstr.xeger(r'[0-9A-Z_]')
+		if rd.random()<self.proba_mut*10:
+			for i in range(len(self.genotype)):
+				if rd.random()<self.proba_mut:
+					self.genotype[i] = int((i+np.random.normal(loc=18,scale=3))%len(self.possibilities))
+			i1,i2 = np.random.randint(0,self.lengthPW-1,size=2)
+			self.genotype[i1],self.genotype[i2] = self.genotype[i2],self.genotype[i1]
+			self.GenoToPheno()
 
 	def crossover(self,partner):
 		'''
@@ -59,10 +73,17 @@ class Individu:
 
 	#######################
 
-	# def GenoToPheno(self):
+	def GenoToPheno(self):
+		self.phenotype = []
+		for elem in self.genotype:
+			self.phenotype.append(self.possibilities[elem])
 
-	# def PhenoToGeno(self):
 
+	def PhenoToGeno(self):
+		self.genotype = []
+		for elem in self.phenotype:
+			self.genotype.append(self.possibilities.index(elem))
+		print(self.phenotype)
 
 
 class AlgoGen:
@@ -74,19 +95,19 @@ class AlgoGen:
 		self.proba_mut = proba_mut
 		self.pop = np.array([Individu(proba_mut) for n in range(self.N)])
 		for individu in self.pop:
-			individu.setRandomGenotype()
+			individu.setRandomPhenotype()
 		
 
 	def show(self):
 		for ind in self.pop:
-			print("genome is ",''.join(ind.genotype))
+			print("genome is ",''.join(ind.phenotype))
 
 
 	def getFitnessPop(self):
 		if self.N <=100:
 			bashCommand = (os.name=='nt')*"ibi_2018-2019_fitness_windows.exe 14"+(os.name!='nt')*"./ibi_2018-2019_fitness_linux 1"
 			for ind in self.pop:
-				bashCommand += ' '+''.join(ind.genotype)
+				bashCommand += ' '+''.join(ind.phenotype)
 			process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
 			output, error = process.communicate()
 			chars = output.decode("utf-8").split('\n')
@@ -97,16 +118,16 @@ class AlgoGen:
 		else:
 			fitnessesAll = []
 			nbBash = int(self.N /100)
-			print('nbBash à faire : ', nbBash)
+			#print('nbBash à faire : ', nbBash)
 			for b in range(nbBash+1):
 				maxi = (b+1)*100
 				if self.N-1 < maxi :
 					maxi = self.N-1
-				print(' De ', b*100+1, ' à ', (b+1)*100)
+				#print(' De ', b*100+1, ' à ', (b+1)*100)
 				
 				bashCommand = (os.name=='nt')*"ibi_2018-2019_fitness_windows.exe 14"+(os.name!='nt')*"./ibi_2018-2019_fitness_linux 1"
 				for ind in self.pop[b*100:(b+1)*100]:
-					bashCommand += ' '+''.join(ind.genotype)
+					bashCommand += ' '+''.join(ind.phenotype)
 				process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
 				output, error = process.communicate()
 				chars = output.decode("utf-8").split('\n')
@@ -115,7 +136,8 @@ class AlgoGen:
 				for c in chars:
 					fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
 				fitnessesAll += fitnesses
-			print(fitnessesAll)
+			#print(fitnessesAll)
+			self.fitnesses = fitnessesAll
 			return(fitnessesAll)
 			
 					
@@ -131,14 +153,14 @@ class AlgoGen:
 	def rouletteSelection(self):
 		'''returns two individuals that will reproduce
 		'''
-		fitnesses = self.getFitnessPop()
-		probs = [f / sum(fitnesses) for f in fitnesses]
+		
+		probs = [f / sum(self.fitnesses) for f in self.fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
 		return p1,p2
 
 	def rankSelection(self):
-		fitnesses = self.getFitnessPop()
-		rank_fitnesses = rankdata(fitnesses)
+		#fitnesses = self.getFitnessPop()
+		rank_fitnesses = rankdata(self.fitnesses)
 		probs = [f / sum(rank_fitnesses) for f in rank_fitnesses]
 		p1, p2 = np.random.choice(self.pop, 2, p = probs)
 		return p1, p2
@@ -152,14 +174,14 @@ class AlgoGen:
 		'''
 		nb_children = 0
 		new_gen = []
-
+		self.fitnesses = self.getFitnessPop()
 		while (nb_children<len(self.pop)):
 
-			parent1,parent2 = self.rouletteSelection()
+			parent1,parent2 = self.rankSelection()
 			child1 = Individu(self.proba_mut)
-			child1.setGenotype(parent1.genotype)
+			child1.setPhenotype(parent1.phenotype)
 			child2 = Individu(self.proba_mut)
-			child2.setGenotype(parent2.genotype)
+			child2.setPhenotype(parent2.phenotype)
 
 			if (rd.random()<self.proba_crossover):
 				child1.crossover(child2)
@@ -168,10 +190,12 @@ class AlgoGen:
 			child2.mutate()
 			new_gen.append(child1)
 			new_gen.append(child2)
+			#new_gen.append(parent1)
+			#new_gen.append(parent2)
 			nb_children += 2
 
 
-		self.pop = new_gen
+		self.pop = list(new_gen)
 		
 	def evolution(self, T):
 		t = 0
@@ -182,42 +206,24 @@ class AlgoGen:
 			self.reproduction()
 			mean_fitnesses.append(np.mean(self.fitnesses))
 			max_fitnesses.append(max(self.fitnesses))
+			if max(self.fitnesses) == 1:
+				#print('Solution found : ' ''.join(self.pop[self.fitnesses.index(max(self.fitnesses)].genotype)))
+				break
 			t+= 1
 		plt.figure()
 		plt.plot(range(T), mean_fitnesses)
 		plt.plot(range(T), max_fitnesses)
 		plt.show()
+		print('Individu avec les meilleur score : ', ''.join(self.pop[self.fitnesses.index(max(self.fitnesses))].phenotype))
 
 
 
 #TESTS
-p_mut = 0.1
-p_co = 0.5
-# indiv1 = Individu(p_mut)
-# indiv1.setRandomGenotype()
-# indiv2 = Individu(p_mut)
-# indiv2.setRandomGenotype()
-
-## test mutation
-# print("genotype indiv2 ",indiv2.genotype)
-# indiv2.mutate()
-# print("genotype indiv2 ",indiv2.genotype)
-
-## test crossover function
-# indiv1.crossover(indiv2)
+p_mut = 0.005
+p_co = 0.3
 
 
-a= AlgoGen(308,p_co,p_mut)
-a.show()
-f = a.getFitnessPop()
-print(len(a.pop), len(f))
-#a.show()
-
-# a.rouletteSelection()
-#a.reproduction()
-#print("new gen is")
-#a.show()
-#a.evolution(1000)
-
+a= AlgoGen(101,p_co,p_mut)
+a.evolution(100)
 
 
