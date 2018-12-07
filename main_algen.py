@@ -7,6 +7,7 @@ import os
 import matplotlib.pyplot as plt
 from scipy.stats import rankdata
 import string
+import sys
 
 
 class Individu:
@@ -222,8 +223,7 @@ class AlgoGen:
 p_mut = 0.005
 p_co = 0.3
 
-
-a= AlgoGen(101,p_co,p_mut)
-a.evolution(100)
+a= AlgoGen(int(sys.argv[1]),p_co,p_mut)
+a.evolution(int(sys.argv[2]))
 
 
