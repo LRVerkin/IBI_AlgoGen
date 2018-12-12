@@ -43,13 +43,15 @@ class Individu:
 	##### CHANGE GENOTYPE OF INDIVIDUAL #######
 
 	def mutate(self):
-		if rd.random()<self.proba_mut*10:
-			for i in range(len(self.genotype)):
-				if rd.random()<self.proba_mut:
-					self.genotype[i] = int((i+np.random.normal(loc=18,scale=3))%len(self.possibilities))
-			i1,i2 = np.random.randint(0,self.lengthPW-1,size=2)
-			self.genotype[i1],self.genotype[i2] = self.genotype[i2],self.genotype[i1]
-			self.GenoToPheno()
+		
+		for i in range(len(self.genotype)):
+			if rd.random()<self.proba_mut:
+				self.genotype[i] = int((i+np.random.normal(loc=0,scale=5))%len(self.possibilities))
+		
+		# if rd.random()<self.proba_mut*10:
+		# 	i1,i2 = np.random.randint(0,self.lengthPW-1,size=2)
+		# 	self.genotype[i1],self.genotype[i2] = self.genotype[i2],self.genotype[i1]
+		# 	self.GenoToPheno()
 
 	def crossover(self,partner):
 		'''
@@ -219,8 +221,8 @@ class AlgoGen:
 
 
 #TESTS
-p_mut = 0.005
-p_co = 0.3
+p_mut = 0.08
+p_co = 0.4
 
 a= AlgoGen(int(sys.argv[1]),p_co,p_mut)
 a.evolution(int(sys.argv[2]))
