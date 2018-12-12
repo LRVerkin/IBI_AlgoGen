@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import rankdata
 import string
 import sys
-
+import math
 
 class Individu:
 	'''
@@ -43,13 +43,13 @@ class Individu:
 	##### CHANGE GENOTYPE OF INDIVIDUAL #######
 
 	def mutate(self):
-		if rd.random()<self.proba_mut*10:
-			for i in range(len(self.genotype)):
-				if rd.random()<self.proba_mut:
-					self.genotype[i] = int((i+np.random.normal(loc=18,scale=3))%len(self.possibilities))
-			i1,i2 = np.random.randint(0,self.lengthPW-1,size=2)
-			self.genotype[i1],self.genotype[i2] = self.genotype[i2],self.genotype[i1]
-			self.GenoToPheno()
+		#if rd.random()<self.proba_mut*10:
+		for i in range(len(self.genotype)):
+			if rd.random()<self.proba_mut:
+				self.genotype[i] = int((i+np.random.normal(loc=0,scale=6))%len(self.possibilities))
+		i1,i2 = np.random.randint(0,self.lengthPW-1,size=2)
+		self.genotype[i1],self.genotype[i2] = self.genotype[i2],self.genotype[i1]
+		self.GenoToPheno()
 
 	def crossover(self,partner):
 		'''
@@ -77,6 +77,7 @@ class Individu:
 	def GenoToPheno(self):
 		self.phenotype = []
 		for elem in self.genotype:
+			#print(math.floor(elem))
 			self.phenotype.append(self.possibilities[elem])
 
 
@@ -88,9 +89,10 @@ class Individu:
 
 class AlgoGen:
 	
-	def __init__(self, Nind,proba_crossover,proba_mut):
+	def __init__(self, Nind, M, proba_crossover,proba_mut):
 		
 		self.N = Nind
+		self.M = M
 		self.proba_crossover = proba_crossover
 		self.proba_mut = proba_mut
 		self.pop = np.array([Individu(proba_mut) for n in range(self.N)])
@@ -107,6 +109,7 @@ class AlgoGen:
 		if self.N <=100:
 			bashCommand = (os.name=='nt')*"ibi_2018-2019_fitness_windows.exe 14"+(os.name!='nt')*"./ibi_2018-2019_fitness_linux 1"
 			for ind in self.pop:
+				ind.PhenoToGeno()
 				bashCommand += ' '+''.join(ind.phenotype)
 			process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
 			output, error = process.communicate()
@@ -120,25 +123,28 @@ class AlgoGen:
 			nbBash = int(self.N /100)
 			#print('nbBash à faire : ', nbBash)
 			for b in range(nbBash+1):
+				#print('bash ', b,' de ', b*100, ' a ',(b+1)*100)
 				maxi = (b+1)*100
-				if self.N-1 < maxi :
-					maxi = self.N-1
-				#print(' De ', b*100+1, ' à ', (b+1)*100)
-				
-				bashCommand = (os.name=='nt')*"ibi_2018-2019_fitness_windows.exe 14"+(os.name!='nt')*"./ibi_2018-2019_fitness_linux 1"
-				for ind in self.pop[b*100:(b+1)*100]:
-					bashCommand += ' '+''.join(ind.phenotype)
-				process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-				output, error = process.communicate()
-				chars = output.decode("utf-8").split('\n')
-				chars = chars[0:len(chars)-1]
-				fitnesses = []
-				for c in chars:
-					fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
-				fitnessesAll += fitnesses
-			#print(fitnessesAll)
+				if self.N < maxi :
+					maxi = self.N
+				#print('maxi : ', maxi, b*100)
+				if b*100 != maxi:
+					bashCommand = (os.name=='nt')*"ibi_2018-2019_fitness_windows.exe 14"+(os.name!='nt')*"./ibi_2018-2019_fitness_linux 1"
+					for ind in self.pop[b*100:maxi]:
+						ind.PhenoToGeno()
+						bashCommand += ' '+''.join(ind.phenotype)
+					process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+					output, error = process.communicate()
+					chars = output.decode("utf-8").split('\n')
+					chars = chars[0:len(chars)-1]
+					fitnesses = []
+					for c in chars:
+						fitnesses.append(float(c.split('\t')[-1].split('\r')[0]))
+					fitnessesAll += fitnesses
 			self.fitnesses = fitnessesAll
 			return(fitnessesAll)
+		self.fitnesses = fitnesses
+		return fitnesses
 			
 					
 
@@ -175,15 +181,15 @@ class AlgoGen:
 		nb_children = 0
 		new_gen = []
 		self.fitnesses = self.getFitnessPop()
-		while (nb_children<len(self.pop)):
+		while (nb_children<self.M):
 
 			parent1,parent2 = self.rankSelection()
 			child1 = Individu(self.proba_mut)
-			child1.setPhenotype(parent1.phenotype)
+			child1.setGenotype(parent1.genotype)
 			child2 = Individu(self.proba_mut)
-			child2.setPhenotype(parent2.phenotype)
+			child2.setGenotype(parent2.genotype)
 
-			if (rd.random()<self.proba_crossover):
+			if rd.random()<self.proba_crossover:
 				child1.crossover(child2)
 
 			child1.mutate()
@@ -193,19 +199,21 @@ class AlgoGen:
 			#new_gen.append(parent1)
 			#new_gen.append(parent2)
 			nb_children += 2
-
-
+		while len(new_gen) < len(self.pop):
+			new_gen.append(np.random.choice(self.pop, 1)[0])
 		self.pop = list(new_gen)
 		
 	def evolution(self, T):
 		t = 0
 		mean_fitnesses = []
 		max_fitnesses = []
+		std_fitnesses = []
 		while t < T:
 			print('Generation ',t)
 			self.reproduction()
 			mean_fitnesses.append(np.mean(self.fitnesses))
 			max_fitnesses.append(max(self.fitnesses))
+			std_fitnesses.append(np.std(self.fitnesses))
 			if max(self.fitnesses) == 1:
 				#print('Solution found : ' ''.join(self.pop[self.fitnesses.index(max(self.fitnesses)].genotype)))
 				break
@@ -213,16 +221,21 @@ class AlgoGen:
 		plt.figure()
 		plt.plot(range(T), mean_fitnesses)
 		plt.plot(range(T), max_fitnesses)
+		plt.plot(range(T), std_fitnesses)
 		plt.show()
+		
 		print('Individu avec les meilleur score : ', ''.join(self.pop[self.fitnesses.index(max(self.fitnesses))].phenotype))
 
 
 
 #TESTS
-p_mut = 0.005
-p_co = 0.3
+p_mut = 0.001
+p_co = 0.25
 
-a= AlgoGen(int(sys.argv[1]),p_co,p_mut)
+a= AlgoGen(int(sys.argv[1]),100, p_co,p_mut)
 a.evolution(int(sys.argv[2]))
+
+#a= AlgoGen(300,p_co,p_mut)
+#a.evolution(400)
 
 
