@@ -9,6 +9,7 @@ from scipy.stats import rankdata
 import string
 import sys
 import math
+import copy
 
 class Individu:
 	'''
@@ -44,13 +45,14 @@ class Individu:
 
 	def mutate(self):
 
-		#if rd.random()<self.proba_mut*10:
+		
 		for i in range(len(self.genotype)):
 			if rd.random()<self.proba_mut:
 				self.genotype[i] = int((i+np.random.normal(loc=0,scale=6))%len(self.possibilities))
-		i1,i2 = np.random.randint(0,self.lengthPW-1,size=2)
-		self.genotype[i1],self.genotype[i2] = self.genotype[i2],self.genotype[i1]
-		self.GenoToPheno()
+		# if rd.random()<self.proba_mut*10:
+		# 	i1,i2 = np.random.randint(0,self.lengthPW-1,size=2)
+		# 	self.genotype[i1],self.genotype[i2] = self.genotype[i2],self.genotype[i1]
+		# 	self.GenoToPheno()
 
 
 	def crossover(self,partner):
@@ -79,7 +81,6 @@ class Individu:
 	def GenoToPheno(self):
 		self.phenotype = []
 		for elem in self.genotype:
-			#print(math.floor(elem))
 			self.phenotype.append(self.possibilities[elem])
 
 
@@ -87,6 +88,9 @@ class Individu:
 		self.genotype = []
 		for elem in self.phenotype:
 			self.genotype.append(self.possibilities.index(elem))
+
+
+#########################
 
 
 class AlgoGen:
@@ -156,29 +160,46 @@ class AlgoGen:
 
 
 
-	#### DIFFERENT SELECTIONS ####
+	### DIFFERENT SELECTIONS ####
 
 	def rouletteSelection(self, n_parents):
-		'''returns two individuals that will reproduce
+		'''returns n_parents individuals that will reproduce
 		'''
 		parents = []
-		bestInd = self.pop[self.fitnesses.index(max(self.fitnesses))]
-		fitnesses_minus1 = list(self.fitnesses)
-		fitnesses_minus1.remove(max(self.fitnesses))
-		pop_mins1 = list(self.pop)
-		pop_mins1.remove(bestInd)
-		probs = [f / sum(fitnesses_minus1) for f in fitnesses_minus1]
-		parents = np.random.choice(pop_mins1, n_parents-1, p = probs)
-		np.append(parents,bestInd)
+
+		bestIndivIndex = self.fitnesses.index(max(self.fitnesses))
+		fit_min = list(self.fitnesses)
+		fit_min.remove(max(self.fitnesses))
+		probs = [f / sum(fit_min) for f in fit_min]
+		#print("len of probs is ",len(probs))
+		pop_min = np.delete(self.pop,bestIndivIndex)
+		#print("len pop min is ",len(pop_min))
+		parents = np.random.choice(pop_min, n_parents-1, p = probs)
+		#print("len of parents is ",len(parents))
+		parents = np.append(parents,self.pop[bestIndivIndex])
+		#print("len of parents should have increased by 1: ",len(parents))
+
 		return parents
-		#return p1,p2
+		#return p1,p2,...p_n_parents
+
+
+	# def rouletteSelection(self, n_parents):
+	# 	'''returns n_parents individuals that will reproduce
+	# 	'''
+	# 	parents = []
+
+	# 	probs = [f / sum(self.fitnesses) for f in self.fitnesses]
+	# 	parents = np.random.choice(self.pop, n_parents, p = probs)
+
+	# 	return parents
+	# 	#return p1,p2,...p_n_parents
+
 
 	def rankSelection(self, n_parents):
 		parents = []
 		rank_fitnesses = rankdata(self.fitnesses)
 		probs = [f / sum(rank_fitnesses) for f in rank_fitnesses]
 		parents = np.random.choice(self.pop, n_parents, p = probs)
-		#print parents
 		return parents
 	#################################
 
@@ -213,6 +234,7 @@ class AlgoGen:
 			new_gen.append(np.random.choice(self.pop, 1)[0])
 		self.pop = list(new_gen)
 		
+		
 	def evolution(self, T):
 		t = 0
 		mean_fitnesses = []
@@ -224,8 +246,10 @@ class AlgoGen:
 			mean_fitnesses.append(np.mean(self.fitnesses))
 			max_fitnesses.append(max(self.fitnesses))
 			std_fitnesses.append(np.std(self.fitnesses))
+			print(''.join(self.pop[self.fitnesses.index(max(self.fitnesses))].phenotype)," with fitness ",max(self.fitnesses))
 			if max(self.fitnesses) == 1:
-				#print('Solution found : ' ''.join(self.pop[self.fitnesses.index(max(self.fitnesses)].genotype)))
+				print('Solution found : ', ''.join(self.pop[self.fitnesses.index(max(self.fitnesses))].phenotype))
+				return ''.join(self.pop[self.fitnesses.index(max(self.fitnesses))].phenotype)
 				break
 			t+= 1
 		plt.figure()
@@ -233,8 +257,8 @@ class AlgoGen:
 		plt.plot(range(T), max_fitnesses)
 		plt.plot(range(T), std_fitnesses)
 		plt.show()
-		
-		print('Individu avec les meilleur score : ', ''.join(self.pop[self.fitnesses.index(max(self.fitnesses))].phenotype))
+		print('Individu avec le meilleur score : ', ''.join(self.pop[self.fitnesses.index(max(self.fitnesses))].phenotype))
+
 
 
 
@@ -243,8 +267,9 @@ class AlgoGen:
 p_mut = 0.01
 p_co = 0.25
 
-a= AlgoGen(200,100, p_co,p_mut)
-a.evolution(10000)
+#good idea for pop size : 200
+a= AlgoGen(int(sys.argv[1]),100, p_co,p_mut)
+a.evolution(int(sys.argv[2]))
 
 #a= AlgoGen(300,p_co,p_mut)
 #a.evolution(400)
